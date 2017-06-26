@@ -8,6 +8,8 @@ import sys
 import zipfile
 import json
 
+import argparse
+
 from functools import reduce
 
 
@@ -76,14 +78,18 @@ def pretty_print(all_intents):
     Generate a pretty print of the conversion output.
     """
     for i in all_intents:
-        print(f'# Intent: {i["intent"]}')
-        print(f"## User Says:")
+        print('# Intent: {}'.format(i["intent"]))
+        print("## User Says:")
         for s in i["user_says"]:
-            print(f"\t- {s}")
+            print("\t- {}".format(s))
         print("## Answers")
         for a in i["answers"]:
-            print(f"\t- {a}")
+            print("\t- {}".format(a))
 
 
 if __name__ == '__main__':
-    convert_zip_file(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Convert API.AI export zip in text format.")
+    parser.add_argument("input_file", type=str, help="The input .zip file")
+    args = parser.parse_args()
+
+    convert_zip_file(args.input_file)
