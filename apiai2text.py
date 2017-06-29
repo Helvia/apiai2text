@@ -33,6 +33,7 @@ def find_text_answer(json_dict):
                 return x + y["speech"]
         if "title" in y:
             return x + [y["title"]]
+        # WARN: Silently do nothing.
         return x
 
     speech = reduce(reduce_speech, messages, [])
@@ -88,7 +89,8 @@ def pretty_print(all_intents):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Convert API.AI export zip in text format.")
+    parser = argparse.ArgumentParser(
+        description="Convert API.AI export zip in text format.")
     parser.add_argument("input_file", type=str, help="The input .zip file")
     args = parser.parse_args()
 
