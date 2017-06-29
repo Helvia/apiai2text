@@ -37,7 +37,12 @@ def find_text_answer(json_dict):
         return x
 
     speech = reduce(reduce_speech, messages, [])
-    return speech
+
+    quick_answers = [
+        qa for m in messages if "replies" in m
+        for qa in m["replies"]]
+
+    return (speech, quick_answers)
 
 
 def find_user_say(json_dict):
@@ -68,8 +73,9 @@ def convert_zip_file(zip_archive_name: str):
             if not os.path.isdir(name):
                 with archive.open(name) as f:
                     json_content = json.loads(f.read())
+                    answers, quick_answers = find_text_answer(json_content)
                     intent_entry = {"intent": name, "user_says": find_user_say(
-                        json_content), "answers": find_text_answer(json_content)}
+                        json_content), "answers": answers, "quick_answers": quick_answers}
                     all_intents.append(intent_entry)
     pretty_print(all_intents)
 
@@ -86,6 +92,10 @@ def pretty_print(all_intents):
         print("## Answers")
         for a in i["answers"]:
             print("\t- {}".format(a))
+        if len(i["quick_answers"]) > 0:
+            print("## Possible Users Answers")
+            for qa in i["quick_answers"]:
+                print("\t- {}".format(qa))
 
 
 if __name__ == '__main__':
