@@ -27,10 +27,7 @@ def find_text_answer(json_dict):
 
     def reduce_speech(x, y):
         if "speech" in y:
-            if type(y["speech"]) is str:
-                return x + [y["speech"]]
-            else:
-                return x + y["speech"]
+            return x + [y["speech"]]
         if "title" in y:
             return x + [y["title"]]
         # WARN: Silently do nothing.
@@ -88,14 +85,21 @@ def pretty_print(all_intents):
         print('# Intent: {}'.format(i["intent"]))
         print("## User Says:")
         for s in i["user_says"]:
-            print("\t- {}".format(s))
+            print(" - {}".format(s))
         print("## Answers")
         for a in i["answers"]:
-            print("\t- {}".format(a))
+            if type(a) is str:
+                print(" 1. {}".format(a))
+            else:
+                if len(a) > 0:
+                    print(" 1. *Alternatives:*")
+                    for element in a:
+                        if element is not "":
+                            print("     - {}".format(element))
         if len(i["quick_answers"]) > 0:
-            print("## Possible Users Answers")
+            print("## Possible User Answers")
             for qa in i["quick_answers"]:
-                print("\t- {}".format(qa))
+                print(" - {}".format(qa))
 
 
 if __name__ == '__main__':
