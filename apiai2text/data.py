@@ -92,11 +92,11 @@ def pretty_print(all_intents: List[APIAITextIntent]):
     """
     result = ""
     for i in all_intents:
-        result += '# Intent: {}\n'.format(i.name)
-        result += "## User Says:\n"
+        result += '\n# Intent: {}\n\n'.format(i.name)
+        result += "## User Says:\n\n"
         for s in i.user_says:
             result += " - {}\n".format(s)
-        result += "## Answers\n"
+        result += "\n## Answers\n\n"
         for a in i.answers:
             if type(a) is str:
                 result += " 1. {}\n".format(a)
@@ -107,7 +107,7 @@ def pretty_print(all_intents: List[APIAITextIntent]):
                         if element is not "":
                             result += "     - {}\n".format(element)
         if len(i.quick_answers) > 0:
-            result += "## Possible User Answers\n"
+            result += "\n## Possible User Answers\n\n"
             for qa in i.quick_answers:
                 result += " - {}\n".format(qa)
     return result
