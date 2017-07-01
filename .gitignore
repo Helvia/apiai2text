@@ -5,3 +5,4 @@ example/
 .mypy_cache/
 .idea_bak/
 .idea/
+*.pyc

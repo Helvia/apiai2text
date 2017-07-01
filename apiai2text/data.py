@@ -1,6 +1,10 @@
 from functools import reduce
 from typing import Dict, Tuple, List
 
+import os
+import zipfile
+import json
+
 class APIAITextIntent(object):
     def __init__(self, name: str, json_content: dict):
         """
@@ -59,3 +63,51 @@ class APIAITextIntent(object):
         data = reduce(lambda x, y: x + y["data"], userSays, [])
         texts = reduce(lambda x, y: x + [y["text"]], data, [])
         return texts
+
+
+def convert_zip_file(zip_archive_name: str):
+    """
+    The main script function.
+    """
+    try:
+        archive = zipfile.ZipFile(zip_archive_name, "r")
+
+        all_intents = []
+        for name in archive.namelist():
+            if name.startswith('intents/'):
+                if not os.path.isdir(name):
+                    with archive.open(name) as f:
+                        json_content = json.loads(f.read())
+                        all_intents.append(APIAITextIntent(name, json_content))
+        return pretty_print(all_intents)
+
+    except IOError as e:
+        print(e)
+        exit(-1)
+
+
+def pretty_print(all_intents: List[APIAITextIntent]):
+    """
+    Generate a pretty print of the conversion output.
+    """
+    result = ""
+    for i in all_intents:
+        result += '# Intent: {}\n'.format(i.name)
+        result += "## User Says:\n"
+        for s in i.user_says:
+            result += " - {}\n".format(s)
+        result += "## Answers\n"
+        for a in i.answers:
+            if type(a) is str:
+                result += " 1. {}\n".format(a)
+            else:
+                if len(a) > 0:
+                    result += " 1. *Alternatives:*\n"
+                    for element in a:
+                        if element is not "":
+                            result += "     - {}\n".format(element)
+        if len(i.quick_answers) > 0:
+            result += "## Possible User Answers\n"
+            for qa in i.quick_answers:
+                result += " - {}\n".format(qa)
+    return result
