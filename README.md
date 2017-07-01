@@ -12,6 +12,7 @@ They are not required if you run only command line interface.
 ```commandline
 pip install flask
 pip install markdown2
+pip install requests
 ```
 
 ## Usage
