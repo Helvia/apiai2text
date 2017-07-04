@@ -7,6 +7,7 @@ import markdown2
 
 app = Flask(__name__)
 
+app.config["TEMPLATES_AUTO_RELOAD"] = True
 
 @app.route('/')
 def hello_world():
