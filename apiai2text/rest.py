@@ -4,6 +4,7 @@ from flask import Flask, request, render_template, Markup
 
 from apiai2text.data import convert_zip_file, APIAITextIntent, pretty_print
 import markdown2
+import time
 
 app = Flask(__name__)
 
@@ -35,5 +36,7 @@ def get_all_intents(dev_token):
     for (name, iid) in intents_ids:
         url = "https://api.api.ai/v1/intents/{}?v=20150910".format(iid)
         r = requests.get(url, headers=headers)
+        print(str(r))
+        time.sleep(1.1) # TODO: Fix this delay in a good way.
         all_intents.append(APIAITextIntent(name, r.json()))
     return all_intents
