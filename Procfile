@@ -1,1 +1,1 @@
-web: python.exe .\apiai2text.py fdfg --rest
+web: python ./apiai2text.py fdfg --rest
