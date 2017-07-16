@@ -5,6 +5,7 @@ Convert API.AI export .zip into readable text.
 
 from typing import Dict, Tuple, List
 
+import os
 import argparse
 
 from apiai2text.data import convert_zip_file
@@ -19,6 +20,7 @@ if __name__ == '__main__':
 
     if args.rest:
         app.config["file"] = args.input_file
-        app.run()
+        port = int(os.environ.get('PORT', 5000))
+        app.run(host='0.0.0.0',port=port)
     else:
         print(convert_zip_file(args.input_file))
