@@ -5,14 +5,19 @@ import os
 import zipfile
 import json
 
+from urllib.parse import urlparse
+
+
 class APIAITextIntent(object):
+
     def __init__(self, name: str, json_content: dict):
         """
         Constructor
         :param name: The intent name.
         :param json_content: The raw JSON content of the intent.
         """
-        self.answers, self.quick_answers = APIAITextIntent.find_text_answer(json_content)
+        self.answers, self.quick_answers = APIAITextIntent.find_text_answer(
+            json_content)
         self.name = name
         self.user_says = APIAITextIntent.find_user_say(json_content)
 
@@ -34,6 +39,7 @@ class APIAITextIntent(object):
         """
         # Answers are in responses[x].messages[y].speech[z]
         # or responses[x].messages[y].title
+        # or responses[x].messages[y].imageUrl (if image)
         # title is a str
         # speech can be a str or a list.
         responses = json_dict["responses"]
@@ -44,6 +50,8 @@ class APIAITextIntent(object):
                 return x + [y["speech"]]
             if "title" in y:
                 return x + [y["title"]]
+            if "imageUrl" in y:
+                return x + [y["imageUrl"]]
             # WARN: Silently do nothing.
             return x
 
@@ -51,6 +59,15 @@ class APIAITextIntent(object):
         quick_answers = APIAITextIntent.find_quick_answers(messages)
 
         return speech, quick_answers
+
+    @staticmethod
+    def is_image_url(s):
+        """
+        Check if the string is an url to an image.
+        """
+        # FIXME: Check for an image, not a generic URL.
+        parsed = urlparse(s)
+        return parsed.scheme != '' and parsed.netloc != ''
 
     @staticmethod
     def find_user_say(json_dict):
@@ -99,7 +116,11 @@ def pretty_print(all_intents: List[APIAITextIntent]):
         result += "\n## Answers\n\n"
         for a in i.answers:
             if type(a) is str:
-                result += " 1. {}\n".format(a)
+                if APIAITextIntent.is_image_url(a):
+                    result += " 1. <img style=\"width: 250px;\" src=\"{}\">\n".format(
+                        a)
+                else:
+                    result += " 1. {}\n".format(a)
             else:
                 if len(a) > 0:
                     result += " 1. *Alternatives:*\n"
