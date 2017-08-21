@@ -113,7 +113,7 @@ def pretty_print(all_intents: List[APIAITextIntent]):
         result += "## User Says:\n\n"
         for s in i.user_says:
             result += " - {}\n".format(s)
-        result += "\n## Answers\n\n"
+        result += "\n## Agent Responses\n\n"
         for a in i.answers:
             if type(a) is str:
                 if APIAITextIntent.is_image_url(a):
