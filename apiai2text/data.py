@@ -7,6 +7,93 @@ import json
 
 from urllib.parse import urlparse
 
+class APIAIIntent(object):
+    
+    def __init__(self, jc):
+        self.id = jc["id"]
+        self.name = jc["name"]
+        self.auto = bool(jc["name"])
+        self.contexts = jc["contexts"]
+        self.templates = jc["templates"]
+        self.user_says = list(map(lambda x: APIAIIntent.UserSays(x), jc["userSays"]))
+        self.responses = list(map(lambda x: APIAIIntent.Responses(x), jc["responses"]))
+
+    class UserSays(object):
+
+        def __init__(self, jc):
+            self.id = jc["id"]
+            self.is_template = bool(jc["isTemplate"])
+            self.count = int(jc["count"])
+            self.data = list(map(lambda x: APIAIIntent.UserSaysData(x), jc["data"]))
+
+    class UserSaysData(object):
+
+        def __init__(self, jc):
+            self.text = jc["text"]
+            # self.meta = jc["meta"]
+            # self.alias = jc["alias"]
+            # self.user_defined = jc["userDefined"]
+
+    class Responses(object):
+
+        def __init__(self, jc):
+            # self.action = jc["action"]
+            self.reset_contexts = jc["resetContexts"]
+            self.affected_contexts = list(map(lambda x: {"name": x["name"], "lifespan": x["lifespan"]}, jc["affectedContexts"]))
+            self.parameters = list(map(lambda x: APIAIIntent.Parameters(x), jc["parameters"]))
+            self.messages = list(map(lambda x: self.instantiate_message(x), jc["messages"]))
+
+        def instantiate_message(self, jc_message):
+            if jc_message["type"] == 0:
+                return APIAIIntent.TextResponse(jc_message)
+            if jc_message["type"] == 3:
+                return APIAIIntent.ImageResponse(jc_message)
+            if jc_message["type"] == 1:
+                return APIAIIntent.CardResponse(jc_message)
+            if jc_message["type"] == 2:
+                return APIAIIntent.QuickReplyes(jc_message)
+
+    class Parameters(object):
+
+        def __init__(self, jc):
+            self.name = jc["name"]
+            self.value = jc["value"]
+            self.default_value = jc["defaultValue"]
+            self.required = bool(jc["required"])
+            self.data_type = jc["dataType"]
+            self.prompts = jc["prompts"]
+            self.is_list = bool(jc["isList"])
+
+    class TextResponse(object):
+
+        def __init__(self, jc):
+            self.type = "TEXT_RESPONSE"
+            if isinstance(jc["speech"], str):
+                self.speech = [jc["speech"]]
+            else:
+                self.speech = jc["speech"]
+    
+    class ImageResponse(object):
+
+        def __init__(self, jc):
+            self.type = "IMAGE_RESPONSE"
+            self.image_url = jc["imageUrl"]
+
+    class CardResponse(object):
+
+        def __init__(self, jc):
+            self.type = "CARD_RESPONSE"
+            self.title = jc["title"]
+            self.subtitle = jc["subtitle"]
+            # TODO: Buttons
+
+    class QuickReplyes(object):
+
+        def __init__(self, jc):
+
+            self.type = "QUICK_REPLY"
+            self.title = jc["title"]
+            self.replies = jc["replies"]
 
 class APIAITextIntent(object):
 
@@ -16,23 +103,29 @@ class APIAITextIntent(object):
         :param name: The intent name.
         :param json_content: The raw JSON content of the intent.
         """
-        self.answers, self.quick_answers = APIAITextIntent.find_text_answer(
-            json_content)
+        self.api_ai_intent = APIAIIntent(json_content)
+        print(self.api_ai_intent)
+        self.answers, self.quick_answers = APIAITextIntent.find_text_answer(self.api_ai_intent)
         self.name = name
         self.user_says = APIAITextIntent.find_user_say(json_content)
 
     @staticmethod
-    def find_quick_answers(messages):
+    def find_quick_answers(messages: List):
         """
         Extract the list of quick answer associated to the given intent.
         :param messages: The list of messages in the intent.
         :type messages: list
         """
-        return [qa for m in messages if "replies" in m
-                for qa in m["replies"]]
+        result = []
+        for m in messages:
+            if m.type == "QUICK_REPLY":
+                result += m.replies
+        #return [qa for m in messages if "replies" in m
+        #        for qa in m["replies"]]
+        return result
 
     @staticmethod
-    def find_text_answer(json_dict: dict) -> Tuple[list, list]:
+    def find_text_answer(apiai_intent: APIAIIntent) -> Tuple[list, list]:
         """
         Extract information about the bot's answers and questions from
         the JSON dictionary passed as an argument.
@@ -42,16 +135,17 @@ class APIAITextIntent(object):
         # or responses[x].messages[y].imageUrl (if image)
         # title is a str
         # speech can be a str or a list.
-        responses = json_dict["responses"]
-        messages = reduce(lambda x, y: x + y["messages"], responses, [])
+        responses = apiai_intent.responses
+        messages = [x for r in responses for x in r.messages]
+        # messages = reduce(lambda x, y: x + y["messages"], responses, [])
 
         def reduce_speech(x: list, y: dict):
-            if "speech" in y:
-                return x + [y["speech"]]
-            if "title" in y:
-                return x + [y["title"]]
-            if "imageUrl" in y:
-                return x + [y["imageUrl"]]
+            if y.type == "TEXT_RESPONSE":
+                return x + y.speech
+            if y.type == "CARD_RESPONSE":
+                return x + [y.title]
+            if y.type == "IMAGE_RESPONSE":
+                return x + [y.image_url]
             # WARN: Silently do nothing.
             return x
 
