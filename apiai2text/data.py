@@ -104,10 +104,9 @@ class APIAITextIntent(object):
         :param json_content: The raw JSON content of the intent.
         """
         self.api_ai_intent = APIAIIntent(json_content)
-        print(self.api_ai_intent)
         self.answers, self.quick_answers = APIAITextIntent.find_text_answer(self.api_ai_intent)
         self.name = name
-        self.user_says = APIAITextIntent.find_user_say(json_content)
+        self.user_says = APIAITextIntent.find_user_say(self.api_ai_intent)
 
     @staticmethod
     def find_quick_answers(messages: List):
@@ -120,8 +119,6 @@ class APIAITextIntent(object):
         for m in messages:
             if m.type == "QUICK_REPLY":
                 result += m.replies
-        #return [qa for m in messages if "replies" in m
-        #        for qa in m["replies"]]
         return result
 
     @staticmethod
@@ -130,14 +127,8 @@ class APIAITextIntent(object):
         Extract information about the bot's answers and questions from
         the JSON dictionary passed as an argument.
         """
-        # Answers are in responses[x].messages[y].speech[z]
-        # or responses[x].messages[y].title
-        # or responses[x].messages[y].imageUrl (if image)
-        # title is a str
-        # speech can be a str or a list.
         responses = apiai_intent.responses
         messages = [x for r in responses for x in r.messages]
-        # messages = reduce(lambda x, y: x + y["messages"], responses, [])
 
         def reduce_speech(x: list, y: dict):
             if y.type == "TEXT_RESPONSE":
@@ -164,15 +155,15 @@ class APIAITextIntent(object):
         return parsed.scheme != '' and parsed.netloc != ''
 
     @staticmethod
-    def find_user_say(json_dict):
+    def find_user_say(apiai_content: APIAIIntent):
         """
         Extract information about the users' answers and questions from
         the JSON dictionary passed as an argument.
         """
         # user text is in userSays[x].data[x].text
-        userSays = json_dict["userSays"]
-        data = reduce(lambda x, y: x + y["data"], userSays, [])
-        texts = reduce(lambda x, y: x + [y["text"]], data, [])
+        userSays = apiai_content.user_says
+        data = reduce(lambda x, y: x + y.data, userSays, [])
+        texts = reduce(lambda x, y: x + [y.text], data, [])
         return texts
 
 
